@@ -116,7 +116,7 @@ footer p{margin:6px 0}
 </head>
 <body>
 <div id="app"></div>
-<script src="data.enc.js?v=edbfc20685"></script>
+<script src="data.enc.js?v=17d8583a95"></script>
 <script>
 (() => {
 const PWKEY = 'jikanwari-staff.pw', MEKEY = 'jikanwari-staff.me';
@@ -185,7 +185,7 @@ function teacherDay(name, info){
   const out = [];
   for(let p=1; p<=info.periods; p++){
     let label, rooms, est = false;
-    if(info.special){ const t = info.special.t[name]; label = t ? t.l[p-1] : ''; rooms = t ? t.r[p-1] : []; est = true; }
+    if(info.special){ const t = info.special.t[name]; label = t ? t.l[p-1] : ''; rooms = t ? t.r[p-1] : []; est = !info.special.fixed; }
     else { const i = (info.wd-1)*7 + (p-1); label = (D.base[name]||[])[i] || ''; rooms = (D.baseRooms[name]||[])[i] || []; }
     const cut = info.cuts.find(e => !e['時限'] || range(e['時限']).includes(p));
     const rep = info.reps.find(e => range(e['時限']).includes(p));
@@ -314,7 +314,7 @@ function roomsHTML(info){
     const fr = rs.filter(r => cut || !used.has(r)); nfree += fr.length;
     h += `<div class="group"><div class="gl">${esc(f)}</div>${rs.map(r => `<span class="tag ${!cut && used.has(r)?'busy':''}">${esc(r)}${!cut && used.has(r)?'（使用中）':''}</span>`).join('')}</div>`;
   });
-  return h + `<p class="muted">空き ${nfree} 室／教室配当の表にある教室だけ。${info.special?'特別時間割の日は目安です。':''}HB・実習室・体育施設などは含みません。</p>`;
+  return h + `<p class="muted">空き ${nfree} 室／教室配当の表にある教室だけ。${info.special && !info.special.fixed?'特別時間割の日は目安です。':''}HB・実習室・体育施設などは含みません。</p>`;
 }
 
 function freeHTML(info){
