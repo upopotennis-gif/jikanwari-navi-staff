@@ -112,6 +112,39 @@ select{width:100%;min-height:48px;border-radius:12px;border:1px solid var(--line
 footer{margin-top:28px;font-size:14px;color:var(--sub)}
 footer p{margin:6px 0}
 .link{background:none;border:0;color:var(--accent);text-decoration:underline;cursor:pointer;min-height:44px;padding:0;font-size:14px}
+/* A4よこ1枚の印刷用（1週間の表示で「A4で印刷」） */
+#sheet{display:none}
+@page{size:A4 landscape;margin:9mm}
+@media print{
+  :root{color-scheme:light}
+  body{background:#fff;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #app:has(#sheet)>.wrap{display:none}
+  #sheet{display:block;font:11pt/1.35 "Hiragino Sans","Noto Sans JP",sans-serif;color:#000}
+}
+#sheet .hd{display:flex;align-items:baseline;gap:14px;border-bottom:2.5px solid #000;padding-bottom:4px;margin-bottom:6px}
+#sheet .hd .nm{font-size:20pt;font-weight:700}
+#sheet .hd .wk{font-size:13pt;font-weight:700}
+#sheet .hd .tt{margin-left:auto;font-size:10pt;color:#444}
+#sheet table{width:100%;border-collapse:collapse;table-layout:fixed}
+#sheet th,#sheet td{border:1px solid #555;padding:3px 5px;vertical-align:top}
+#sheet thead th{background:#e9e9ef;font-size:12.5pt;text-align:center;padding:4px}
+#sheet thead th small{display:block;font-size:9pt;font-weight:normal}
+#sheet th.p{width:15mm;background:#f2f2f6;text-align:center;vertical-align:middle;font-size:15pt}
+#sheet th.p small{display:block;font-size:8pt;font-weight:normal;line-height:1.2}
+#sheet th.lab{background:#f2f2f6;font-size:9.5pt;vertical-align:middle;text-align:center}
+#sheet td.c{height:16mm}
+#sheet td.ev{font-size:8.5pt;line-height:1.3;height:14mm}
+#sheet td.ev div{margin-bottom:1px}
+#sheet .sj{font-size:11.5pt;font-weight:700;line-height:1.25}
+#sheet .cl{font-size:12pt;font-weight:700}
+#sheet .rm{font-size:10pt;margin-top:1px;line-height:1.3}
+#sheet .rm b{border:1.5px solid #000;border-radius:3px;padding:0 3px}
+#sheet .es{font-size:8pt;color:#555}
+#sheet .cut{color:#777;text-decoration:line-through}
+#sheet td.free{background:#fafafa}
+#sheet td.off{background:#eee;text-align:center;vertical-align:middle;font-size:13pt;font-weight:700;color:#444}
+#sheet td.mi{font-size:9.5pt;color:#333}
+#sheet .ft{margin-top:5px;font-size:8.5pt;color:#444}
 </style>
 </head>
 <body>
@@ -229,6 +262,7 @@ function render(){
   else h += planHTML(info);
   h += `<footer><p>もとの資料：${esc(D.year)} 職員版時間割・教室配当・特別時間割（教員版）・月間行事予定。特別時間割の日の教室は、ふだんの教室配当から出した目安です。</p>
     <p>データ更新：${esc(D.updated)}　<button class="link" id="logout">この端末の合言葉を消す</button></p></footer></div>`;
+  if(view==='mine' && me && mineWeek && !info.pending) h += sheetHTML();
   app.innerHTML = h;
   bind();
 }
@@ -249,7 +283,7 @@ function mineHTML(info){
   h += `</select></div>`;
   if(!me) return h;
   h += `<div class="chips" style="margin-top:10px"><button class="chip ${!mineWeek?'sel':''}" data-mw="0">1日</button><button class="chip ${mineWeek?'sel':''}" data-mw="1">1週間</button></div>`;
-  if(mineWeek) return h + weekHTML();
+  if(mineWeek) return h + `<button class="btn primary" id="printBtn" style="width:100%;margin-top:10px">この週をA4で印刷</button>` + weekHTML();
   if(info.off) return h + offHTML(info) + planBrief(info);
   h += specialNote(info);
   const now = curP(info);
@@ -285,6 +319,45 @@ function weekHTML(){
     h += '</div>';
   }
   return h + '</div>';
+}
+
+// A4よこ1枚: 曜日×時限の表＋その日の行事
+function sheetHTML(){
+  const mon = monday(cur), days = [0,1,2,3,4].map(i => dayInfo(addDays(mon,i)));
+  const fri = addDays(mon,4), t = D.teachers.find(x => x.name===me) || {};
+  let est = false;
+  let h = `<div id="sheet"><div class="hd"><span class="nm">${esc(me)} 先生</span><span class="wk">${md(mon)}（月）〜 ${md(fri)}（金）の時間割</span><span class="tt">${esc(t.kyoka||'')}　印刷 ${md(new Date())}</span></div><table><thead><tr><th class="p" style="font-size:10pt">時限</th>`;
+  days.forEach(info => h += `<th>${md(info.d)}（${WD[info.d.getDay()]}）${info.special?'<small>特別時間割</small>':info.off?'<small>休み</small>':'<small>&nbsp;</small>'}</th>`);
+  h += `</tr></thead><tbody>`;
+  const cols = days.map(info => info.pending || info.off ? null : teacherDay(me, info));
+  // 行事の行
+  h += `<tr><th class="lab">行事<br>予定</th>`;
+  days.forEach(info => {
+    // 月間行事予定（学校行事・会議）を優先。無い日だけ生徒用の行事を出す
+    let st = info.staff.filter(([c]) => c==='学校行事' || c==='諸会議・研修').map(([,x]) => x);
+    if(!st.length) st = planList(info).rows.map(([,v]) => v);
+    h += `<td class="ev">${[...new Set(st)].slice(0,4).map(x => `<div>・${esc(x)}</div>`).join('')}</td>`;
+  });
+  h += `</tr>`;
+  for(let p=1; p<=7; p++){
+    const tt = tm(p);
+    h += `<tr><th class="p">${p}<small>${tt?esc(tt.start)+'<br>〜'+esc(tt.end):''}</small></th>`;
+    days.forEach((info, i) => {
+      if(info.pending){ if(p===1) h += `<td class="off" rowspan="7">準備中</td>`; return; }
+      if(info.off){ if(p===1) h += `<td class="off" rowspan="7">授業なし<br><span style="font-size:10pt;font-weight:normal">${esc(info.off)}</span></td>`; return; }
+      const x = cols[i][p-1];
+      if(!x){ h += `<td class="free"></td>`; return; }
+      const k = kind(x.label);
+      if(x.rep){ h += `<td class="mi"><b>${esc(x.rep)}</b>${x.label?`<div class="es">もとは ${esc(splitLabel(x.label).s)}</div>`:''}</td>`; return; }
+      if(k==='free'){ h += `<td class="free"></td>`; return; }
+      if(k==='misc'){ h += `<td class="mi${x.cut?' cut':''}">${esc(x.label.replace(/\n/g,' '))}</td>`; return; }
+      const sl = splitLabel(x.label); if(x.est && x.rooms.length) est = true;
+      h += `<td class="c"><div class="${x.cut?'cut':''}"><div class="sj">${esc(sl.s)}</div><div class="cl">${esc(sl.c)}</div>${x.rooms.length?`<div class="rm">📍<b>${esc(x.rooms.join('・'))}</b>${x.est?' <span class="es">目安</span>':''}</div>`:''}</div>${x.cut?`<div class="es">${esc(x.cut)}</div>`:''}</td>`;
+    });
+    h += `</tr>`;
+  }
+  h += `</tbody></table><div class="ft">空欄は授業なし。${est?'「目安」の教室は特別時間割の第1案から出したものです。変わることがあるので、当日は掲示も確かめてください。':''}　時間割ナビ（教員用）より　データ更新 ${esc(D.updated)}</div></div>`;
+  return h;
 }
 
 function periodPicker(info){
@@ -369,6 +442,7 @@ function bind(){
   document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => { view = b.dataset.v; render(); });
   document.querySelectorAll('[data-p]').forEach(b => b.onclick = () => { selP = +b.dataset.p; render(); });
   document.querySelectorAll('[data-mw]').forEach(b => b.onclick = () => { mineWeek = b.dataset.mw==='1'; render(); });
+  if($('printBtn')) $('printBtn').onclick = () => window.print();
   if($('meSel')) $('meSel').onchange = e => { me = e.target.value; set(MEKEY, me || null); render(); };
   $('logout').onclick = () => { set(PWKEY, null); D = null; lockScreen('この端末の合言葉を消しました'); };
 }
