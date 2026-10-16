@@ -149,7 +149,7 @@ footer p{margin:6px 0}
 </head>
 <body>
 <div id="app"></div>
-<script src="data.enc.js?v=cdbf5fae7f"></script>
+<script src="data.enc.js?v=084c07e225"></script>
 <script>
 (() => {
 const PWKEY = 'jikanwari-staff.pw', MEKEY = 'jikanwari-staff.me';
@@ -351,7 +351,7 @@ function sheetHTML(){
       const k = kind(x.label);
       if(x.rep){ h += `<td class="mi"><b>${esc(x.rep)}</b>${x.label?`<div class="es">もとは ${esc(splitLabel(x.label).s)}</div>`:''}</td>`; return; }
       if(k==='free'){ h += `<td class="free"></td>`; return; }
-      if(k==='misc'){ h += `<td class="mi${x.cut?' cut':''}">${esc(x.label.replace(/\n/g,' '))}</td>`; return; }
+      if(k==='misc'){ h += `<td class="mi${x.cut?' cut':''}">${esc(x.label.replace(/\n/g,' '))}${x.rooms.length?`<div class="rm">📍<b>${esc(x.rooms.join('・'))}</b></div>`:''}</td>`; return; }
       const sl = splitLabel(x.label); if(x.est && x.rooms.length) est = true;
       h += `<td class="c"><div class="${x.cut?'cut':''}"><div class="sj">${esc(sl.s)}</div><div class="cl">${esc(sl.c)}</div>${x.rooms.length?`<div class="rm">📍<b>${esc(x.rooms.length>3 ? x.rooms.slice(0,3).join('・')+' ほか' : x.rooms.join('・'))}</b>${x.est?'<span class="es" style="white-space:nowrap"> 目安</span>':''}</div>`:''}</div>${x.cut?`<div class="es">${esc(x.cut)}</div>`:''}</td>`;
     });
