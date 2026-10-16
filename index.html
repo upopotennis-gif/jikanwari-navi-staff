@@ -149,7 +149,7 @@ footer p{margin:6px 0}
 </head>
 <body>
 <div id="app"></div>
-<script src="data.enc.js?v=56fbff883b"></script>
+<script src="data.enc.js?v=cdbf5fae7f"></script>
 <script>
 (() => {
 const PWKEY = 'jikanwari-staff.pw', MEKEY = 'jikanwari-staff.me';
@@ -295,7 +295,8 @@ function mineHTML(info){
     let body;
     if(x.rep) body = `<div class="subj">${esc(x.rep)}</div><div class="alts">全体の予定${x.label?'（もとは '+esc(splitLabel(x.label).s)+'）':''}</div>`;
     else if(k==='free') body = `<div class="subj">空き</div>`;
-    else if(k==='misc') body = `<div class="subj">${esc(x.label.replace(/\n/g,' '))}</div>`;
+    else if(k==='misc') body = `<div class="subj">${esc(x.label.replace(/\n/g,' '))}</div>` +
+        (x.rooms.length ? `<div class="room">${PIN}<b>${esc(x.rooms.join('・'))}</b></div>` : '');
     else { const sl = splitLabel(x.label);
       body = `<div class="subj">${esc(sl.s)}<span class="cls">${esc(sl.c)}</span></div>` +
         (x.rooms.length ? `<div class="room">${PIN}<b>${esc(x.rooms.join('・'))}</b></div>` : '') +
@@ -315,7 +316,7 @@ function weekHTML(){
     if(info.pending){ h += `<div class="muted">準備中</div></div>`; continue; }
     if(info.off){ h += `<div class="muted">授業なし：${esc(info.off)}</div></div>`; continue; }
     teacherDay(me, info).forEach(x => { const k = kind(x.label), sl = k==='class' ? splitLabel(x.label) : null;
-      h += `<div class="r"><span class="n">${x.p}</span><span class="s ${k!=='class'||x.cut?'dim':''}">${x.rep?esc(x.rep):k==='class'?esc(sl.s)+' '+esc(sl.c):k==='misc'?esc(x.label.replace(/\n/g,' ')):'空き'}</span><span class="rm">${x.cut?'なし':k==='class'?esc(x.rooms.join('・')):''}</span></div>`; });
+      h += `<div class="r"><span class="n">${x.p}</span><span class="s ${k!=='class'||x.cut?'dim':''}">${x.rep?esc(x.rep):k==='class'?esc(sl.s)+' '+esc(sl.c):k==='misc'?esc(x.label.replace(/\n/g,' ')):'空き'}</span><span class="rm">${x.cut?'なし':k!=='free'?esc(x.rooms.join('・')):''}</span></div>`; });
     h += '</div>';
   }
   return h + '</div>';
