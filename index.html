@@ -149,7 +149,7 @@ footer p{margin:6px 0}
 </head>
 <body>
 <div id="app"></div>
-<script src="data.enc.js?v=4ea0389f08"></script>
+<script src="data.enc.js?v=2c670383de"></script>
 <script>
 (() => {
 const PWKEY = 'jikanwari-staff.pw', MEKEY = 'jikanwari-staff.me';
@@ -305,8 +305,12 @@ function mineHTML(info){
     if(x.cut) body += `<div class="alts">${esc(x.cut)}</div>`;
     h += `<div class="${cls}"><div class="no"><b>${x.p}</b><small>${t?esc(t.start):''}</small><small>${t?'〜'+esc(t.end):''}</small></div><div class="body">${body}</div></div>`;
   });
+  // 7限のあとの先生ごとの予定（模試の監督など）
+  const af = afterOf(me, info);
+  if(af.length) h += `<div class="break">放課後</div>` + af.map(a => `<div class="period misc"><div class="no"><b>後</b></div><div class="body"><div class="subj">${esc(a)}</div></div></div>`).join('');
   return h + '</div>' + planBrief(info);
 }
+function afterOf(name, info){ const t = info.special && info.special.t[name]; return (t && t.a) || []; }
 
 function weekHTML(){
   const mon = monday(cur); let h = '<div class="weekview">';
@@ -317,6 +321,7 @@ function weekHTML(){
     if(info.off){ h += `<div class="muted">授業なし：${esc(info.off)}</div></div>`; continue; }
     teacherDay(me, info).forEach(x => { const k = kind(x.label), sl = k==='class' ? splitLabel(x.label) : null;
       h += `<div class="r"><span class="n">${x.p}</span><span class="s ${k!=='class'||x.cut?'dim':''}">${x.rep?esc(x.rep):k==='class'?esc(sl.s)+' '+esc(sl.c):k==='misc'?esc(x.label.replace(/\n/g,' ')):'空き'}</span><span class="rm">${x.cut?'なし':k!=='free'?esc(x.rooms.join('・')):''}</span></div>`; });
+    afterOf(me, info).forEach(a => h += `<div class="r"><span class="n">後</span><span class="s dim">${esc(a)}</span><span class="rm"></span></div>`);
     h += '</div>';
   }
   return h + '</div>';
