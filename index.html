@@ -149,7 +149,7 @@ footer p{margin:6px 0}
 </head>
 <body>
 <div id="app"></div>
-<script src="data.enc.js?v=bb6cd81194"></script>
+<script src="data.enc.js?v=870fc036a9"></script>
 <script>
 (() => {
 const PWKEY = 'jikanwari-staff.pw', MEKEY = 'jikanwari-staff.me';
@@ -222,9 +222,10 @@ function teacherDay(name, info){
     let label, rooms, est = false;
     if(info.special){ const t = info.special.t[name]; label = t ? t.l[p-1] : ''; rooms = t ? t.r[p-1] : []; est = !info.special.fixed; }
     else { const i = (info.wd-1)*7 + (p-1); label = (D.base[name]||[])[i] || ''; rooms = (D.baseRooms[name]||[])[i] || []; }
-    const cut = info.cuts.find(e => !e['時限'] || range(e['時限']).includes(p));
-    const rep = info.reps.find(e => range(e['時限']).includes(p));
-    const kousa = info.kousa && !rep && !cut && !!tm(p, info);
+    const chu = info.kousa && /中学/.test(label);  // 中学の授業は考査の日もある（本人 2026-11-12）：カットも考査の置きかえもしない
+    const cut = chu ? null : info.cuts.find(e => !e['時限'] || range(e['時限']).includes(p));
+    const rep = chu ? null : info.reps.find(e => range(e['時限']).includes(p));
+    const kousa = info.kousa && !chu && !rep && !cut && !!tm(p, info);
     out.push({p, label, rooms, est, cut: cut && !rep ? (cut['内容']||'授業なし') : '', rep: rep ? rep['内容'] : kousa ? '定期考査' : ''});
   }
   return out;
@@ -293,7 +294,7 @@ function mineHTML(info){
   h += '<div class="list">';
   teacherDay(me, info).forEach(x => {
     if(x.p===5) h += `<div class="break">昼休み</div>`;
-    const k = kind(x.label), t = tm(x.p, info);
+    const k = kind(x.label), t = tm(x.p, /中学/.test(x.label) ? null : info);
     const cls = ['period', k==='free'?'free':k==='misc'?'misc':'', x.cut?'cut':'', now===x.p?'now':''].join(' ');
     let body;
     if(x.rep) body = `<div class="subj">${esc(x.rep)}</div><div class="alts">全体の予定${x.label?'（もとは '+esc(splitLabel(x.label).s)+'）':''}</div>`;
