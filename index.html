@@ -336,9 +336,9 @@ function weekHTML(){
 function sheetHTML(){
   const mon = monday(cur), days = [0,1,2,3,4].map(i => dayInfo(addDays(mon,i)));
   const fri = addDays(mon,4), t = D.teachers.find(x => x.name===me) || {};
-  let est = false;
+  let est = false, diff = false;
   let h = `<div id="sheet"><div class="hd"><span class="nm">${esc(me)} 先生</span><span class="wk">${md(mon)}（月）〜 ${md(fri)}（金）の時間割</span><span class="tt">${esc(t.kyoka||'')}　印刷 ${md(new Date())}</span></div><table><thead><tr><th class="p" style="font-size:10pt">時限</th>`;
-  days.forEach(info => h += `<th>${md(info.d)}（${WD[info.d.getDay()]}）${info.special?'<small>特別時間割</small>':info.off?'<small>休み</small>':'<small>&nbsp;</small>'}</th>`);
+  days.forEach(info => h += `<th>${md(info.d)}（${WD[info.d.getDay()]}）${info.kousa?'<small>定期考査（考査の時程）</small>':info.special?'<small>特別時間割</small>':info.off?'<small>休み</small>':'<small>&nbsp;</small>'}</th>`);
   h += `</tr></thead><tbody>`;
   const cols = days.map(info => info.pending || info.off ? null : teacherDay(me, info));
   // 行事の行
@@ -359,7 +359,10 @@ function sheetHTML(){
       const x = cols[i][p-1];
       if(!x){ h += `<td class="free"></td>`; return; }
       const k = kind(x.label);
-      if(x.rep){ h += `<td class="mi"><b>${esc(x.rep)}</b>${x.label?`<div class="es">もとは ${esc(splitLabel(x.label).s)}</div>`:''}</td>`; return; }
+      const jt = info.jitei && info.jitei!=='通常' && !/中学/.test(x.label) ? tm(p, info) : null;
+      const jtH = jt ? `<div class="es" style="white-space:nowrap">${esc(jt.start)}〜${esc(jt.end)}</div>` : '';
+      if(jt) diff = true;
+      if(x.rep){ h += `<td class="mi"><b>${esc(x.rep)}</b>${jtH}${x.label?`<div class="es">もとは ${esc(splitLabel(x.label).s)}</div>`:''}</td>`; return; }
       if(k==='free'){ h += `<td class="free"></td>`; return; }
       if(k==='misc'){ h += `<td class="mi${x.cut?' cut':''}">${esc(x.label.replace(/\n/g,' '))}${x.rooms.length?`<div class="rm">📍<b>${esc(x.rooms.join('・'))}</b></div>`:''}</td>`; return; }
       const sl = splitLabel(x.label); if(x.est && x.rooms.length) est = true;
@@ -367,7 +370,7 @@ function sheetHTML(){
     });
     h += `</tr>`;
   }
-  h += `</tbody></table><div class="ft">空欄は授業なし。${est?'「目安」の教室は特別時間割の第1案から出したものです。変わることがあるので、当日は掲示も確かめてください。':''}　時間割ナビ（教員用）より　データ更新 ${esc(D.updated)}</div></div>`;
+  h += `</tbody></table><div class="ft">空欄は授業なし。${diff?'左の時刻は通常の時程です。時程がちがう日は、コマの中にその日の時刻を書いています（中学校の授業は通常の時刻）。':''}${est?'「目安」の教室は特別時間割の第1案から出したものです。変わることがあるので、当日は掲示も確かめてください。':''}　時間割ナビ（教員用）より　データ更新 ${esc(D.updated)}</div></div>`;
   return h;
 }
 
