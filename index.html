@@ -276,7 +276,8 @@ function offHTML(info){ return `<div class="off"><div class="big">授業はあ�
 function curP(info){
   if(iso(new Date())!==info.ds) return null;
   const n = new Date(), hm = n.getHours()*60+n.getMinutes(), toMin = s => { const [a,b] = String(s).split(':').map(Number); return a*60+b; };
-  for(let p=1;p<=info.periods;p++){ const t = tm(p, info); if(t && hm >= toMin(t.start)-10 && hm <= toMin(t.end)) return p; }
+  const labs = me ? teacherDay(me, info) : [];
+  for(let p=1;p<=info.periods;p++){ const t = tm(p, labs[p-1] && /中学/.test(labs[p-1].label) ? null : info); if(t && hm >= toMin(t.start)-10 && hm <= toMin(t.end)) return p; }
   return null;
 }
 
