@@ -149,7 +149,7 @@ footer p{margin:6px 0}
 </head>
 <body>
 <div id="app"></div>
-<script src="data.enc.js?v=90469f8f12"></script>
+<script src="data.enc.js?v=d00b44093e"></script>
 <script>
 (() => {
 const PWKEY = 'jikanwari-staff.pw', MEKEY = 'jikanwari-staff.me';
@@ -215,13 +215,15 @@ function dayInfo(d){
   info.kousa = /考査/.test(info.jitei);  // 定期考査の日：1〜4限はふだんの授業をしない
   return info;
 }
+// ふだんの時間割は途中で変わる（D.base2.from の日から新しい時間割）
+function baseOn(ds){ return D.base2 && ds >= D.base2.from ? D.base2 : D; }
 // 先生のその日のコマ: [{p, label, rooms, est}]
 function teacherDay(name, info){
   const out = [];
   for(let p=1; p<=info.periods; p++){
     let label, rooms, est = false;
     if(info.special){ const t = info.special.t[name]; label = t ? t.l[p-1] : ''; rooms = t ? t.r[p-1] : []; est = !info.special.fixed; }
-    else { const i = (info.wd-1)*7 + (p-1); label = (D.base[name]||[])[i] || ''; rooms = (D.baseRooms[name]||[])[i] || []; }
+    else { const i = (info.wd-1)*7 + (p-1), b = baseOn(info.ds); label = (b.base[name]||[])[i] || ''; rooms = (b.baseRooms[name]||[])[i] || []; }
     const kan = info.kousa && info.special && info.special.t[name] && (info.special.t[name].k||[]).includes(p);  // 監督表のコマ（監督・巡回・LHR）はそのまま出す
     const chu = kan || (info.kousa && /中学/.test(label));  // 中学の授業は考査の日もある（本人 2026-11-12）：カットも考査の置きかえもしない
     const cut = chu ? null : info.cuts.find(e => !e['時限'] || range(e['時限']).includes(p));
@@ -386,7 +388,7 @@ function periodPicker(info){
 function usedRooms(info, p){
   const used = new Set();
   if(info.special){ Object.values(info.special.t).forEach(t => (t.r[p-1]||[]).forEach(r => used.add(r))); }
-  else (D.used[String((info.wd-1)*7 + (p-1))] || []).forEach(r => used.add(r));
+  else (baseOn(info.ds).used[String((info.wd-1)*7 + (p-1))] || []).forEach(r => used.add(r));
   return used;
 }
 function roomsHTML(info){
